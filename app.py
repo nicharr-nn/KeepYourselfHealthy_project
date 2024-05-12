@@ -34,7 +34,7 @@ class TempValue(BaseModel):
 
 class AQIValue(BaseModel):
     ts: datetime
-    pm25: float
+    aqi: float
     AQIrisklevel: str
 
 
@@ -47,16 +47,16 @@ def measurement_temp(temp: float):
         return "high"
 
 
-def measurement_pm25(pm25: float):
-    if pm25 < 50:
+def measurement_aqi(aqi: float):
+    if aqi < 50:
         return "low"
-    elif 50.1 <= pm25 <= 100:
+    elif 50.1 <= aqi <= 100:
         return "moderate"
-    elif 100.1 <= pm25 <= 150:
+    elif 100.1 <= aqi <= 150:
         return "Unhealthy for Sensitive Groups"
-    elif 150.1 <= pm25 <= 200:
+    elif 150.1 <= aqi <= 200:
         return "Unhealthy"
-    elif 200.1 <= pm25 <= 300:
+    elif 200.1 <= aqi <= 300:
         return "Very Unhealthy"
     else:
         return "Hazardous"
@@ -73,14 +73,14 @@ async def get_temp() -> list[TempValue]:
     return result
 
 
-@app.get("/api/pm25")
-async def get_pm25() -> list[AQIValue]:
+@app.get("/api/aqi")
+async def get_aqi() -> list[AQIValue]:
     with pool.connection() as conn, conn.cursor() as cs:
         cs.execute("""
             SELECT ts, pm25 FROM pm25
         """)
-        result = [AQIValue(ts=ts, pm25=pm25,
-                           AQIrisklevel=measurement_pm25(pm25)) for ts, pm25 in cs.fetchall()]
+        result = [AQIValue(ts=ts, aqi=pm25,
+                           AQIrisklevel=measurement_aqi(pm25)) for ts, pm25 in cs.fetchall()]
     return result
 
 
@@ -96,14 +96,14 @@ async def get_temp_avg() -> TempValue:
     return result
 
 
-@app.get("/api/pm25/avg")
-async def get_pm25_avg() -> AQIValue:
+@app.get("/api/aqi/avg")
+async def get_aqi_avg() -> AQIValue:
     with pool.connection() as conn, conn.cursor() as cs:
         cs.execute("""
             SELECT AVG(pm25) FROM pm25
         """)
         avg_pm25 = cs.fetchone()[0]
-    return AQIValue(ts=datetime.now(), pm25=avg_pm25, AQIrisklevel=measurement_pm25(avg_pm25))
+    return AQIValue(ts=datetime.now(), aqi=avg_pm25, AQIrisklevel=measurement_aqi(avg_pm25))
 
 
 @app.get("/api/temp/max")
@@ -116,14 +116,14 @@ async def get_temp_max() -> TempValue:
     return TempValue(ts=datetime.now(), temp=max_temp, heatstroke=measurement_temp(max_temp))
 
 
-@app.get("/api/pm25/max")
-async def get_pm25_max() -> AQIValue:
+@app.get("/api/aqi/max")
+async def get_aqi_max() -> AQIValue:
     with pool.connection() as conn, conn.cursor() as cs:
         cs.execute("""
             SELECT MAX(pm25) FROM pm25
         """)
         max_pm25 = cs.fetchone()[0]
-    return AQIValue(ts=datetime.now(), pm25=max_pm25, AQIrisklevel=measurement_pm25(max_pm25))
+    return AQIValue(ts=datetime.now(), aqi=max_pm25, AQIrisklevel=measurement_aqi(max_pm25))
 
 
 @app.get("/api/temp/min")
@@ -136,11 +136,29 @@ async def get_temp_min() -> TempValue:
     return TempValue(ts=datetime.now(), temp=min_temp, heatstroke=measurement_temp(min_temp))
 
 
-@app.get("/api/pm25/min")
-async def get_pm25_min() -> AQIValue:
+@app.get("/api/aqi/min")
+async def get_aqi_min() -> AQIValue:
     with pool.connection() as conn, conn.cursor() as cs:
         cs.execute("""
             SELECT MIN(pm25) FROM pm25
         """)
         min_pm25 = cs.fetchone()[0]
-    return AQIValue(ts=datetime.now(), pm25=min_pm25, AQIrisklevel=measurement_pm25(min_pm25))
+    return AQIValue(ts=datetime.now(), aqi=min_pm25, AQIrisklevel=measurement_aqi(min_pm25))
+
+@app.get("/api/temp/avg/daily")
+async def get_temp_avg_daily() -> list[TempValue]:
+    with pool.connection() as conn, conn.cursor() as cs:
+        cs.execute("""
+            SELECT DATE(ts), AVG(temp) FROM temp GROUP BY DATE(ts)
+        """)
+        result = [TempValue(ts=ts, temp=temp) for ts, temp in cs.fetchall()]
+    return result
+
+@app.get("/api/aqi/avg/daily")
+async def get_aqi_avg_daily() -> list[AQIValue]:
+    with pool.connection() as conn, conn.cursor() as cs:
+        cs.execute("""
+            SELECT DATE(ts), AVG(pm25) FROM pm25 GROUP BY DATE(ts)
+        """)
+        result = [AQIValue(ts=ts, aqi=pm25) for ts, pm25 in cs.fetchall()]
+    return result
