@@ -62,7 +62,7 @@ def measurement_aqi(aqi: float):
         return "Hazardous"
 
 
-@app.get("/api/temp")
+@app.get("/data/temp")
 async def get_temp() -> list[TempValue]:
     with pool.connection() as conn, conn.cursor() as cs:
         cs.execute("""
@@ -72,19 +72,7 @@ async def get_temp() -> list[TempValue]:
                             heatstroke=measurement_temp(temp)) for ts, temp in cs.fetchall()]
     return result
 
-
-@app.get("/api/aqi")
-async def get_aqi() -> list[AQIValue]:
-    with pool.connection() as conn, conn.cursor() as cs:
-        cs.execute("""
-            SELECT ts, pm25 FROM pm25
-        """)
-        result = [AQIValue(ts=ts, aqi=pm25,
-                           AQIrisklevel=measurement_aqi(pm25)) for ts, pm25 in cs.fetchall()]
-    return result
-
-
-@app.get("/api/temp/avg")
+@app.get("/data/temp/avg")
 async def get_temp_avg() -> TempValue:
     with pool.connection() as conn, conn.cursor() as cs:
         cs.execute("""
@@ -95,57 +83,7 @@ async def get_temp_avg() -> TempValue:
                         heatstroke="low" if avg_temp < 38 else "moderate" if 38.1 <= avg_temp <= 40.0 else "high")
     return result
 
-
-@app.get("/api/aqi/avg")
-async def get_aqi_avg() -> AQIValue:
-    with pool.connection() as conn, conn.cursor() as cs:
-        cs.execute("""
-            SELECT AVG(pm25) FROM pm25
-        """)
-        avg_pm25 = cs.fetchone()[0]
-    return AQIValue(ts=datetime.now(), aqi=avg_pm25, AQIrisklevel=measurement_aqi(avg_pm25))
-
-
-@app.get("/api/temp/max")
-async def get_temp_max() -> TempValue:
-    with pool.connection() as conn, conn.cursor() as cs:
-        cs.execute("""
-            SELECT MAX(temp) FROM temp
-        """)
-        max_temp = cs.fetchone()[0]
-    return TempValue(ts=datetime.now(), temp=max_temp, heatstroke=measurement_temp(max_temp))
-
-
-@app.get("/api/aqi/max")
-async def get_aqi_max() -> AQIValue:
-    with pool.connection() as conn, conn.cursor() as cs:
-        cs.execute("""
-            SELECT MAX(pm25) FROM pm25
-        """)
-        max_pm25 = cs.fetchone()[0]
-    return AQIValue(ts=datetime.now(), aqi=max_pm25, AQIrisklevel=measurement_aqi(max_pm25))
-
-
-@app.get("/api/temp/min")
-async def get_temp_min() -> TempValue:
-    with pool.connection() as conn, conn.cursor() as cs:
-        cs.execute("""
-            SELECT MIN(temp) FROM temp
-        """)
-        min_temp = cs.fetchone()[0]
-    return TempValue(ts=datetime.now(), temp=min_temp, heatstroke=measurement_temp(min_temp))
-
-
-@app.get("/api/aqi/min")
-async def get_aqi_min() -> AQIValue:
-    with pool.connection() as conn, conn.cursor() as cs:
-        cs.execute("""
-            SELECT MIN(pm25) FROM pm25
-        """)
-        min_pm25 = cs.fetchone()[0]
-    return AQIValue(ts=datetime.now(), aqi=min_pm25, AQIrisklevel=measurement_aqi(min_pm25))
-
-@app.get("/api/temp/avg/daily")
+@app.get("/data/temp/avg/daily")
 async def get_temp_avg_daily() -> list[TempValue]:
     with pool.connection() as conn, conn.cursor() as cs:
         cs.execute("""
@@ -154,7 +92,44 @@ async def get_temp_avg_daily() -> list[TempValue]:
         result = [TempValue(ts=ts, temp=temp, heatstroke=measurement_temp(temp)) for ts, temp in cs.fetchall()]
     return result
 
-@app.get("/api/aqi/avg/daily")
+@app.get("/data/temp/min")
+async def get_temp_min() -> TempValue:
+    with pool.connection() as conn, conn.cursor() as cs:
+        cs.execute("""
+            SELECT MIN(temp) FROM temp
+        """)
+        min_temp = cs.fetchone()[0]
+    return TempValue(ts=datetime.now(), temp=min_temp, heatstroke=measurement_temp(min_temp))
+
+@app.get("/data/temp/max")
+async def get_temp_max() -> TempValue:
+    with pool.connection() as conn, conn.cursor() as cs:
+        cs.execute("""
+            SELECT MAX(temp) FROM temp
+        """)
+        max_temp = cs.fetchone()[0]
+    return TempValue(ts=datetime.now(), temp=max_temp, heatstroke=measurement_temp(max_temp))
+
+@app.get("/data/aqi")
+async def get_aqi() -> list[AQIValue]:
+    with pool.connection() as conn, conn.cursor() as cs:
+        cs.execute("""
+            SELECT ts, pm25 FROM pm25
+        """)
+        result = [AQIValue(ts=ts, aqi=pm25,
+                           AQIrisklevel=measurement_aqi(pm25)) for ts, pm25 in cs.fetchall()]
+    return result
+
+@app.get("/data/aqi/avg")
+async def get_aqi_avg() -> AQIValue:
+    with pool.connection() as conn, conn.cursor() as cs:
+        cs.execute("""
+            SELECT AVG(pm25) FROM pm25
+        """)
+        avg_pm25 = cs.fetchone()[0]
+    return AQIValue(ts=datetime.now(), aqi=avg_pm25, AQIrisklevel=measurement_aqi(avg_pm25))
+
+@app.get("/data/aqi/avg/daily")
 async def get_aqi_avg_daily() -> list[AQIValue]:
     with pool.connection() as conn, conn.cursor() as cs:
         cs.execute("""
@@ -162,3 +137,22 @@ async def get_aqi_avg_daily() -> list[AQIValue]:
         """)
         result = [AQIValue(ts=ts, aqi=pm25, AQIrisklevel=measurement_aqi(pm25)) for ts, pm25 in cs.fetchall()]
     return result
+
+@app.get("/data/aqi/min")
+async def get_aqi_min() -> AQIValue:
+    with pool.connection() as conn, conn.cursor() as cs:
+        cs.execute("""
+            SELECT MIN(pm25) FROM pm25
+        """)
+        min_pm25 = cs.fetchone()[0]
+    return AQIValue(ts=datetime.now(), aqi=min_pm25, AQIrisklevel=measurement_aqi(min_pm25))
+
+@app.get("/data/aqi/max")
+async def get_aqi_max() -> AQIValue:
+    with pool.connection() as conn, conn.cursor() as cs:
+        cs.execute("""
+            SELECT MAX(pm25) FROM pm25
+        """)
+        max_pm25 = cs.fetchone()[0]
+    return AQIValue(ts=datetime.now(), aqi=max_pm25, AQIrisklevel=measurement_aqi(max_pm25))
+
