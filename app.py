@@ -151,7 +151,7 @@ async def get_temp_avg_daily() -> list[TempValue]:
         cs.execute("""
             SELECT DATE(ts), AVG(temp) FROM temp GROUP BY DATE(ts)
         """)
-        result = [TempValue(ts=ts, temp=temp) for ts, temp in cs.fetchall()]
+        result = [TempValue(ts=ts, temp=temp, heatstroke=measurement_temp(temp)) for ts, temp in cs.fetchall()]
     return result
 
 @app.get("/api/aqi/avg/daily")
@@ -160,5 +160,5 @@ async def get_aqi_avg_daily() -> list[AQIValue]:
         cs.execute("""
             SELECT DATE(ts), AVG(pm25) FROM pm25 GROUP BY DATE(ts)
         """)
-        result = [AQIValue(ts=ts, aqi=pm25) for ts, pm25 in cs.fetchall()]
+        result = [AQIValue(ts=ts, aqi=pm25, AQIrisklevel=measurement_aqi(pm25)) for ts, pm25 in cs.fetchall()]
     return result
