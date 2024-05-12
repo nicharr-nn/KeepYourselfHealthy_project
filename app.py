@@ -82,3 +82,65 @@ async def get_pm25() -> list[AQIValue]:
         result = [AQIValue(ts=ts, pm25=pm25,
                            AQIrisklevel=measurement_pm25(pm25)) for ts, pm25 in cs.fetchall()]
     return result
+
+
+@app.get("/api/temp/avg")
+async def get_temp_avg() -> TempValue:
+    with pool.connection() as conn, conn.cursor() as cs:
+        cs.execute("""
+            SELECT AVG(temp) FROM temp
+        """)
+        avg_temp = cs.fetchone()[0]
+    result = TempValue(ts=datetime.now(), temp=avg_temp,
+                        heatstroke="low" if avg_temp < 38 else "moderate" if 38.1 <= avg_temp <= 40.0 else "high")
+    return result
+
+
+@app.get("/api/pm25/avg")
+async def get_pm25_avg() -> AQIValue:
+    with pool.connection() as conn, conn.cursor() as cs:
+        cs.execute("""
+            SELECT AVG(pm25) FROM pm25
+        """)
+        avg_pm25 = cs.fetchone()[0]
+    return AQIValue(ts=datetime.now(), pm25=avg_pm25, AQIrisklevel=measurement_pm25(avg_pm25))
+
+
+@app.get("/api/temp/max")
+async def get_temp_max() -> TempValue:
+    with pool.connection() as conn, conn.cursor() as cs:
+        cs.execute("""
+            SELECT MAX(temp) FROM temp
+        """)
+        max_temp = cs.fetchone()[0]
+    return TempValue(ts=datetime.now(), temp=max_temp, heatstroke=measurement_temp(max_temp))
+
+
+@app.get("/api/pm25/max")
+async def get_pm25_max() -> AQIValue:
+    with pool.connection() as conn, conn.cursor() as cs:
+        cs.execute("""
+            SELECT MAX(pm25) FROM pm25
+        """)
+        max_pm25 = cs.fetchone()[0]
+    return AQIValue(ts=datetime.now(), pm25=max_pm25, AQIrisklevel=measurement_pm25(max_pm25))
+
+
+@app.get("/api/temp/min")
+async def get_temp_min() -> TempValue:
+    with pool.connection() as conn, conn.cursor() as cs:
+        cs.execute("""
+            SELECT MIN(temp) FROM temp
+        """)
+        min_temp = cs.fetchone()[0]
+    return TempValue(ts=datetime.now(), temp=min_temp, heatstroke=measurement_temp(min_temp))
+
+
+@app.get("/api/pm25/min")
+async def get_pm25_min() -> AQIValue:
+    with pool.connection() as conn, conn.cursor() as cs:
+        cs.execute("""
+            SELECT MIN(pm25) FROM pm25
+        """)
+        min_pm25 = cs.fetchone()[0]
+    return AQIValue(ts=datetime.now(), pm25=min_pm25, AQIrisklevel=measurement_pm25(min_pm25))
