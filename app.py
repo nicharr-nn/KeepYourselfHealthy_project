@@ -189,7 +189,3 @@ async def get_aqi_avg_weekly() -> list[AQIValue]:
         """)
         result = [AQIValue(ts=ts, aqi=avg_pm25, AQIrisklevel=measurement_aqi(avg_pm25)) for ts, avg_pm25 in cursor.fetchall()]
     return result
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
