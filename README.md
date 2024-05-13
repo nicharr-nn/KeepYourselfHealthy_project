@@ -1,15 +1,28 @@
 # Keep Yourself Healthy Project
 
 ## Team Members
+Software and Knowledge Engineering, Faculty of Engineering
+
 Nicha Ruangrit 6510545411
 
 Phavida Rattanamongkolkul 6510545675
 
 ## Description
-Sitting for too long at the computer can lead to stress and physical strain, so we should go to exercise.
-But before going out to exercise, there are many factors that affect the decision to exercise, such as the 
-AQI (Air Quality Index) in your area and the temperature to beware Heat Stroke and danger from dust.
-Our project will help you decide whether to exercise inside or outside based on the AQI and temperature in your area.
+Sitting for too long at the computer can lead to stress and physical strain, so we should go exercise. 
+But before heading out, there are several factors to consider, such as the AQI (Air Quality Index) 
+in your area and the temperature, to avoid heat stroke and danger from dust. Our project will help you decide whether 
+to exercise indoors or outdoors based on the AQI and temperature in your area.
+
+## Features
+- Visualize the average AQI and temperature in this week for each day
+### API
+- Get the AQI and temperature in the area (minimum, maximum, average, average for each day)
+- Get the Heat Stroke Level (Low, Moderate, High)
+- Get the AQI Level (Good, Moderate, Unhealthy for Sensitive Groups, Unhealthy, Very Unhealthy, Hazardous)
+
+## Libraries and Tools
+- FastAPI
+- Python
 
 ## Primary Data
 - Temperature Sensor from KidBright
