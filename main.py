@@ -4,6 +4,7 @@ from config import DB_HOST, DB_USER, DB_PASSWD, DB_NAME
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException
 from datetime import datetime
+from fastapi.middleware.cors import CORSMiddleware
 
 pool = PooledDB(creator=pymysql,
                 host=DB_HOST,
@@ -156,6 +157,13 @@ async def get_aqi_max() -> AQIValue:
         max_pm25 = cs.fetchone()[0]
     return AQIValue(ts=datetime.now(), aqi=max_pm25, AQIrisklevel=measurement_aqi(max_pm25))
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 @app.get("/data/temp/avg/weekly")
 async def get_temp_avg_weekly() -> list[TempValue]:
     with pool.connection() as conn, conn.cursor() as cursor:
@@ -167,6 +175,19 @@ async def get_temp_avg_weekly() -> list[TempValue]:
             ORDER BY DATE(ts)
         """)
         result = [TempValue(ts=ts, temp=temp, heatstroke=measurement_temp(temp)) for ts, temp in cursor.fetchall()]
+    return result
+
+@app.get("/data/aqi/avg/weekly")
+async def get_aqi_avg_weekly() -> list[AQIValue]:
+    with pool.connection() as conn, conn.cursor() as cursor:
+        cursor.execute("""
+            SELECT DATE(ts) as date, AVG(pm25) as avg_pm25
+            FROM pm25
+            WHERE ts >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            GROUP BY DATE(ts)
+            ORDER BY DATE(ts)
+        """)
+        result = [AQIValue(ts=ts, aqi=avg_pm25, AQIrisklevel=measurement_aqi(avg_pm25)) for ts, avg_pm25 in cursor.fetchall()]
     return result
 
 if __name__ == "__main__":
