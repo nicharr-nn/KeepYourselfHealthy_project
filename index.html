@@ -12,6 +12,7 @@
         async function fetchData() {
             const response = await fetch('http://localhost:8000/data/temp/avg/weekly');
             const data = await response.json();
+            console.log(data);
             return data.map(d => ({
                 x: new Date(d.ts),
                 y: d.temp

@@ -156,3 +156,19 @@ async def get_aqi_max() -> AQIValue:
         max_pm25 = cs.fetchone()[0]
     return AQIValue(ts=datetime.now(), aqi=max_pm25, AQIrisklevel=measurement_aqi(max_pm25))
 
+@app.get("/data/temp/avg/weekly")
+async def get_temp_avg_weekly() -> list[TempValue]:
+    with pool.connection() as conn, conn.cursor() as cursor:
+        cursor.execute("""
+            SELECT DATE(ts) as date, AVG(temp) as avg_temp
+            FROM temp
+            WHERE ts >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            GROUP BY DATE(ts)
+            ORDER BY DATE(ts)
+        """)
+        result = [TempValue(ts=ts, temp=temp, heatstroke=measurement_temp(temp)) for ts, temp in cursor.fetchall()]
+    return result
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
